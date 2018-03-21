@@ -6,14 +6,17 @@ Program for running through a UFW log
 
 # Standard library modules
 import getopt
-import os
+import subprocess
 import sys
 
 
 def main():
-    INPUT_FLAG = False
+    NO_ARG_FLAG = 0
+    FILE_INPUT_FLAG = 0
+    FILE_OUTPUT_FLAG = 0
+
+    INPUT_FILE = ''
     FRESH_LOG = ""
-    OUTPUT_FLAG = False
     OUTPUT_FILE = ""
     
     try:
@@ -22,25 +25,32 @@ def main():
         print(e)
         exit(2)
 
-    for opt, arg in opts:
-        if opt in ('-h', '--help'):
-            pass
-        elif opt in ('-f', '--input-file'):
-            INPUT_FLAG = True
-            with open("fw.txt", "r") as f:
-                INPUT_FILE = converter(f)
-        elif opt in ('-o', '--output-file'):
-            OUTPUT_FLAG = True
-            OUTPUT_FILE = opt
-        elif opt in ('-n', '--new'):
-            journal = os.system("journalctl | grep -i ufw")
-            FRESH_LOG = converter(journal)
-
-    if OUTPUT_FLAG == True:
-        write_to_file(FRESH_LOG)
-    elif OUTPUT_FILE == True and INPUT_FLAG == True:
-        write_to_file(INPUT_FILE)
+    if opts == []:
+        NO_ARG_FLAG = 1
+        journal = subprocess.getoutput("journalctl | grep -i ufw")
+        FRESH_LOG = converter(journal)
     else:
+        for opt, arg in opts:
+            if opt in ('-h', '--help'):
+                pass
+            elif opt in ('-f', '--input-file'):
+                FILE_INPUT_FLAG = 1
+                with open("fw.txt", "r") as f:
+                    INPUT_FILE = converter(f)
+            elif opt in ('-o', '--output-file'):
+                FILE_OUTPUT_FLAG = 1
+                OUTPUT_FILE = opt
+            elif opt in ('-n', '--new'):
+                journal = subprocess.run("journalctl | grep -i ufw", shell=True)
+                FRESH_LOG = converter(journal)
+
+    if FILE_OUTPUT_FLAG == 1 and NO_ARG_FLAG == 1:
+        write_to_file(FRESH_LOG)
+    elif FILE_OUTPUT_FLAG == 1 and FILE_INPUT_FLAG == 1:
+        write_to_file(INPUT_FILE)
+    elif FILE_OUTPUT_FLAG == 0 and FILE_INPUT_FLAG == 1:
+        print(INPUT_FILE)
+    elif NO_ARG_FLAG == 1:
         print(FRESH_LOG)
 
 
@@ -54,35 +64,30 @@ def system_verifier():
 
 
 def converter(log):
-    i = 0
-
     for event in log:
-            if "UFW BLOCK" in event:
-                time = event[:15]
-                mac = event[event.find("MAC=") + 4:event.find("MAC=") + 42]
-                srcIp = event[event.find("SRC=") + 4:event.find("SRC=") + 15]
-                dstIp = event[event.find("DST=") + 4:event.find("DST=") + 15]
-                proto = event[event.find("PROTO=") + 6:event.find("PROTO=") + 9]
-                port = event[event.find("DPT=") + 4:event.find("DPT=") + 10]
-                breaker = "-" * 50
-                
-                if i < 1000:
-                    formattedString = "Event: {}\n" \
-                          "Time: {}\n" \
+        # if "UFW BLOCK" in event:
+        time = event[:15]
+        mac = event[event.find("MAC=") + 4:event.find("MAC=") + 42]
+        srcIp = event[event.find("SRC=") + 4:event.find("SRC=") + 15]
+        dstIp = event[event.find("DST=") + 4:event.find("DST=") + 15]
+        proto = event[event.find("PROTO=") + 6:event.find("PROTO=") + 9]
+        port = event[event.find("DPT=") + 4:event.find("DPT=") + 10]
+        breaker = "-" * 50
+
+        formattedString = "Time: {}\n" \
                           "Mac address: {}\n" \
                           "Source Ip: {}\n" \
                           "Destination Ip: {}\n" \
                           "Protocol: {}\n" \
                           "Destination Port: {}\n" \
-                                      "{}".format(i, time, mac, srcIp, dstIp, proto, port, breaker)
-                return(formattedString)
+                          "{}".format(time, mac, srcIp, dstIp, proto, port, breaker)
 
-                i += 1
+        return(formattedString)
 
 
 def write_to_file(log):
     with open('firewall_log.txt', 'w') as f:
-        f.write(inputer)
+        f.write(log)
 
 
 if __name__ == '__main__':
