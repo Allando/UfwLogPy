@@ -6,18 +6,21 @@ Program for running through a UFW log
 
 # Standard library modules
 import getopt
+import os
 import sys
 
 
 def main():
+    INPUT_FLAG = False
+    FRESH_LOG = ""
+    OUTPUT_FLAG = False
+    OUTPUT_FILE = ""
+    
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'f:o:h', ['input-file=', 'output-file=', 'help'])
+        opts, args = getopt.getopt(sys.argv[1:], 'f:o:nh', ['input-file=', 'output-file=', 'new', 'help'])
     except getopt.GetoptError as e:
         print(e)
         exit(2)
-
-    INPUT_FLAG = False
-    OUTPUT_FLAG = False
 
     for opt, arg in opts:
         if opt in ('-h', '--help'):
@@ -29,9 +32,9 @@ def main():
         elif opt in ('-o', '--output-file'):
             OUTPUT_FLAG = True
             OUTPUT_FILE = opt
-        else:
-            f = "something"
-            FRESH_LOG = converter(f)
+        elif opt in ('-n', '--new'):
+            journal = os.system("journalctl | grep -i ufw")
+            FRESH_LOG = converter(journal)
 
     if OUTPUT_FLAG == True:
         write_to_file(FRESH_LOG)
@@ -51,6 +54,8 @@ def system_verifier():
 
 
 def converter(log):
+    i = 0
+
     for event in log:
             if "UFW BLOCK" in event:
                 time = event[:15]
@@ -70,7 +75,7 @@ def converter(log):
                           "Protocol: {}\n" \
                           "Destination Port: {}\n" \
                                       "{}".format(i, time, mac, srcIp, dstIp, proto, port, breaker)
-                    return(formattedString)
+                return(formattedString)
 
                 i += 1
 
