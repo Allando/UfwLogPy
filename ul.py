@@ -15,7 +15,7 @@ def main():
     FILE_INPUT_FLAG = 0
     FILE_OUTPUT_FLAG = 0
 
-    INPUT_FILE = ''
+    INPUT_FILE = ""
     FRESH_LOG = ""
     OUTPUT_FILE = ""
     
@@ -65,24 +65,24 @@ def system_verifier():
 
 def converter(log):
     for event in log:
-        # if "UFW BLOCK" in event:
-        time = event[:15]
-        mac = event[event.find("MAC=") + 4:event.find("MAC=") + 42]
-        srcIp = event[event.find("SRC=") + 4:event.find("SRC=") + 15]
-        dstIp = event[event.find("DST=") + 4:event.find("DST=") + 15]
-        proto = event[event.find("PROTO=") + 6:event.find("PROTO=") + 9]
-        port = event[event.find("DPT=") + 4:event.find("DPT=") + 10]
-        breaker = "-" * 50
+        if "sudo" not in event:
+            time = event[:15]
+            mac = event[event.find("MAC=") + 4:event.find("MAC=") + 42]
+            srcIp = event[event.find("SRC=") + 4:event.find("SRC=") + 15]
+            dstIp = event[event.find("DST=") + 4:event.find("DST=") + 15]
+            proto = event[event.find("PROTO=") + 6:event.find("PROTO=") + 9]
+            port = event[event.find("DPT=") + 4:event.find("DPT=") + 10]
+            breaker = "-" * 50
 
-        formattedString = "Time: {}\n" \
-                          "Mac address: {}\n" \
-                          "Source Ip: {}\n" \
-                          "Destination Ip: {}\n" \
-                          "Protocol: {}\n" \
-                          "Destination Port: {}\n" \
-                          "{}".format(time, mac, srcIp, dstIp, proto, port, breaker)
+            formattedString = "Time: {}\n" \
+                              "Mac address: {}\n" \
+                              "Source Ip: {}\n" \
+                              "Destination Ip: {}\n" \
+                              "Protocol: {}\n" \
+                              "Destination Port: {}\n" \
+                              "{}".format(time, mac, srcIp, dstIp, proto, port, breaker)
 
-        return(formattedString)
+            return(formattedString)
 
 
 def write_to_file(log):
