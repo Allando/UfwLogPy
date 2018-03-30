@@ -27,8 +27,14 @@ def main():
 
     if opts == []:
         NO_ARG_FLAG = 1
-        journal = subprocess.getoutput("journalctl | grep -i ufw")
-        FRESH_LOG = converter(journal)
+
+        with open("temp/temp.txt", "w") as f:
+            command = "journalctl | grep -i ufw"
+            subprocess.run(command, stdout=f, shell=True)
+
+        with open('temp/temp.txt', 'r') as f:
+            for lines in f.readlines():
+                FRESH_LOG = converter(lines)
     else:
         for opt, arg in opts:
             if opt in ('-h', '--help'):
@@ -63,26 +69,25 @@ def system_verifier():
     """
 
 
-def converter(log):
-    for event in log:
-        if "sudo" not in event:
-            time = event[:15]
-            mac = event[event.find("MAC=") + 4:event.find("MAC=") + 42]
-            srcIp = event[event.find("SRC=") + 4:event.find("SRC=") + 15]
-            dstIp = event[event.find("DST=") + 4:event.find("DST=") + 15]
-            proto = event[event.find("PROTO=") + 6:event.find("PROTO=") + 9]
-            port = event[event.find("DPT=") + 4:event.find("DPT=") + 10]
-            breaker = "-" * 50
+def converter(event):
 
-            formattedString = "Time: {}\n" \
-                              "Mac address: {}\n" \
-                              "Source Ip: {}\n" \
-                              "Destination Ip: {}\n" \
-                              "Protocol: {}\n" \
-                              "Destination Port: {}\n" \
-                              "{}".format(time, mac, srcIp, dstIp, proto, port, breaker)
+    time = event[:15]
+    mac = event[event.find("MAC=") + 4:event.find("MAC=") + 42]
+    srcIp = event[event.find("SRC=") + 4:event.find("SRC=") + 15]
+    dstIp = event[event.find("DST=") + 4:event.find("DST=") + 13]
+    proto = event[event.find("PROTO=") + 6:event.find("PROTO=") + 9]
+    port = event[event.find("DPT=") + 4:event.find("DPT=") + 10]
+    breaker = "-" * 50
 
-            return(formattedString)
+    formattedString = "Time: {}\n" \
+                      "Mac address: {}\n" \
+                      "Source Ip: {}\n" \
+                      "Destination Ip: {}\n" \
+                      "Protocol: {}\n" \
+                      "Destination Port: {}\n" \
+                      "{}".format(time, mac, srcIp, dstIp, proto, port, breaker)
+
+    print(formattedString)
 
 
 def write_to_file(log):
